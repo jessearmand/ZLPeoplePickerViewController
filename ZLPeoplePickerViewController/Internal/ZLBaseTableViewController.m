@@ -32,10 +32,13 @@
 
     NSMutableSet *allPhoneNumbers = [NSMutableSet set];
     for (APContact *contact in contacts) {
+        if ([self shouldHideContact:contact]) {
+            continue;
+        }
 
         // only display one linked contacts        
-        if(contact.phones && [contact.phones count] > 0 && ![allPhoneNumbers containsObject:contact.phones[0]]) {
-            [allPhoneNumbers addObject:contact.phones[0]];
+        if(contact.phones && [contact.phones count] > 0 && ![allPhoneNumbers containsObject:contact.phones[0].number]) {
+            [allPhoneNumbers addObject:contact.phones[0].number];
         }
 
         // add new contact
@@ -195,17 +198,36 @@
 }
 
 - (BOOL)shouldEnableCellforContact:(APContact *)contact {
-    if(self.filedMask == ZLContactFieldAll) {
+    if(self.fieldMask == ZLContactFieldAll) {
         return YES;
     }
     else {
-    return ((self.filedMask & ZLContactFieldPhones) &&
+    return ((self.fieldMask & ZLContactFieldPhones) &&
             contact.phones.count > 0) ||
-           ((self.filedMask & ZLContactFieldEmails) &&
+           ((self.fieldMask & ZLContactFieldEmails) &&
             contact.emails.count > 0) ||
-           ((self.filedMask & ZLContactFieldPhoto) && contact.thumbnail) ||
-           ((self.filedMask & ZLContactFieldAddresses) &&
+           ((self.fieldMask & ZLContactFieldPhoto) && contact.thumbnail) ||
+           ((self.fieldMask & ZLContactFieldAddresses) &&
             contact.addresses.count > 0);
+    }
+}
+
+- (BOOL)shouldHideContact:(APContact *)contact {
+    if (self.shouldHideUnmaskedContacts == NO) {
+        return NO;
+    }
+
+    if(self.fieldMask == ZLContactFieldAll) {
+        return NO;
+    }
+    else {
+    return ((self.fieldMask & ZLContactFieldPhones) &&
+            contact.phones.count == 0) ||
+           ((self.fieldMask & ZLContactFieldEmails) &&
+            contact.emails.count == 0) ||
+           ((self.fieldMask & ZLContactFieldPhoto) && contact.thumbnail == nil) ||
+           ((self.fieldMask & ZLContactFieldAddresses) &&
+            contact.addresses.count == 0);
     }
 }
 
